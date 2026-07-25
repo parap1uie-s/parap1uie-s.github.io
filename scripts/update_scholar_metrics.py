@@ -64,7 +64,7 @@ def update_index(index_path: Path, metrics: tuple[str, str, str]) -> bool:
             f"<div><b>{citations}</b><span>Citations</span></div>\n"
             f"      <div><b>{h_index}</b><span>h-index</span></div>\n"
             f"      <div><b>{i10_index}</b><span>i10-index</span></div>\n"
-            f"      <p>Google Scholar snapshot, {snapshot_date}. Metrics and links can be updated manually.</p>"
+            f"      <p>Google Scholar snapshot, {snapshot_date}.</p>"
         ),
         html,
         count=1,
@@ -85,7 +85,16 @@ def main() -> int:
     args = parser.parse_args()
 
     index_path = Path(args.index)
-    metrics = parse_metrics(fetch_scholar_html())
+    try:
+        metrics = parse_metrics(fetch_scholar_html())
+    except (OSError, TimeoutError, ValueError) as exc:
+        print(
+            "Warning: Scholar metrics update skipped; keeping the existing "
+            f"snapshot. Reason: {exc}",
+            file=sys.stderr,
+        )
+        return 0
+
     changed = update_index(index_path, metrics)
     print(
         f"Scholar metrics: citations={metrics[0]}, h-index={metrics[1]}, "
